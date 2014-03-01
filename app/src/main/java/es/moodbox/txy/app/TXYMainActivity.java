@@ -1,6 +1,5 @@
 package es.moodbox.txy.app;
 
-import android.os.Vibrator;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -16,6 +15,8 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.List;
 
+import es.moodbox.txy.app.domain.Meetup;
+import es.moodbox.txy.app.domain.User;
 import es.moodbox.txy.app.services.TXYFinderService;
 
 public class TXYMainActivity extends ActionBarActivity {
@@ -26,14 +27,16 @@ public class TXYMainActivity extends ActionBarActivity {
 
 	private BluetoothAdapter mBluetoothAdapter;
 
-	private List<String> mUsersNear;
+	private User user;
+
+	private List<Meetup> mMeetups;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_txy_main);
 
-		mUsersNear = new ArrayList<String>();
+		mMeetups = new ArrayList<Meetup>();
 
 		mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 	}
@@ -65,6 +68,9 @@ public class TXYMainActivity extends ActionBarActivity {
 		// Don't forget to unregister during onDestroy
 		registerReceiver(broadCastServiceReceiver, filter);
 
+		//get the user name and address
+		user = new User(mBluetoothAdapter.getName(), mBluetoothAdapter.getAddress());
+
 		// start the service
 		// use this to start and trigger a service
 		Intent intentService = new Intent(getApplicationContext(), TXYFinderService.class);
@@ -74,20 +80,25 @@ public class TXYMainActivity extends ActionBarActivity {
 	private BroadcastReceiver broadCastServiceReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			Log.d("@@ broadCastServiceReceiver", "BR received!");
 			Bundle extras = intent.getExtras();
-			Log.d("@@ Received from service has users: " + extras.containsKey(TXYFinderService.USER_KEY), "");
-			String user = extras.getString(TXYFinderService.USER_KEY);
-			if(!mUsersNear.contains(user)) {
-				Log.d("@@ Adding to screen ", "");
-				addToScreen(mUsersNear);
-				mUsersNear.add(user);
-			}	
-			Toast.makeText(context, "User/s found: " + user, Toast.LENGTH_LONG).show();
+			Log.d("@@ BR Received from service has user: " + extras.containsKey(TXYFinderService.USER_KEY), "");
+			//the other user
+			String brUserNameB = extras.getString(TXYFinderService.USER_KEY);
+			String userBName = brUserNameB.split("-")[0];
+			String userBAddress = brUserNameB.split("-")[1];
+
+			Meetup meetup = new Meetup(user, new User(userBName, userBAddress));
+
+			//if not already added
+			if (!mMeetups.contains(meetup)) {
+				mMeetups.add(meetup);
+			}
+			addToScreen(mMeetups);
+			Toast.makeText(context, "User found: " + brUserNameB, Toast.LENGTH_LONG).show();
 
 			// Vibrate the mobile phone
-			Vibrator vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
-			vibrator.vibrate(500);
+			//Vibrator vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
+			//vibrator.vibrate(500);
 		}
 	};
 
@@ -99,9 +110,14 @@ public class TXYMainActivity extends ActionBarActivity {
 	}
 
 
-	private void addToScreen(List<String> users) {
+	private void addToScreen(List<Meetup> users) {
 		TextView usersTextView = (TextView) findViewById(R.id.usersTextView);
-		usersTextView.setText(users.toString());
+		StringBuffer sb = new StringBuffer("");
+		for (Meetup meetup : users) {
+			sb.append(meetup.toString());
+			sb.append("\n");
+		}
+		usersTextView.setText(sb.toString());
 	}
 
 }
