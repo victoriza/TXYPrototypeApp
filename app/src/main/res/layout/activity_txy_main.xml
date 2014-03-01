@@ -1,0 +1,26 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="es.moodbox.txy.app.TXYMainActivity"
+    tools:ignore="MergeRootFrame"
+    android:background="#ff0891">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="@string/hello_world"
+        android:id="@+id/textView"
+        android:layout_gravity="left|top"
+        android:textColor="#0097ff" />
+
+    <TextView
+        android:layout_width="77dp"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="@string/users"
+        android:id="@+id/usersTextView"
+        android:layout_gravity="left|center_vertical" />
+</FrameLayout>
