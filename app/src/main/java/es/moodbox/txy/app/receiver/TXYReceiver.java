@@ -12,10 +12,10 @@ import es.moodbox.txy.app.services.TXYFinderService;
  */
 public class TXYReceiver extends BroadcastReceiver {
 
-    @Override
-    public void onReceive(Context context, Intent intent) {
-        Log.d("@@ TXYReceiver", " starting service, phone just send the BOOT_COMPLETED! ");
-        Intent service = new Intent(context, TXYFinderService.class);
-        context.startService(service);
-    }
+	@Override
+	public void onReceive(Context context, Intent intent) {
+		Log.d("@@ TXYReceiver", " starting service, phone just send the BOOT_COMPLETED! ");
+		Intent service = new Intent(context, TXYFinderService.class);
+		context.startService(service);
+	}
 }

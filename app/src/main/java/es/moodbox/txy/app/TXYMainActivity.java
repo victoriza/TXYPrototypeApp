@@ -26,14 +26,14 @@ public class TXYMainActivity extends ActionBarActivity {
 
 	private BluetoothAdapter mBluetoothAdapter;
 
-	private List<String> mArrayAdapter;
+	private List<String> mUsersNear;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_txy_main);
 
-		mArrayAdapter = new ArrayList<String>();
+		mUsersNear = new ArrayList<String>();
 
 		mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 	}
@@ -77,10 +77,14 @@ public class TXYMainActivity extends ActionBarActivity {
 			Log.d("@@ broadCastServiceReceiver", "BR received!");
 			Bundle extras = intent.getExtras();
 			Log.d("@@ Received from service has users: " + extras.containsKey(TXYFinderService.USER_KEY), "");
-
 			String user = extras.getString(TXYFinderService.USER_KEY);
-
+			if(!mUsersNear.contains(user)) {
+				Log.d("@@ Adding to screen ", "");
+				addToScreen(mUsersNear);
+				mUsersNear.add(user);
+			}	
 			Toast.makeText(context, "User/s found: " + user, Toast.LENGTH_LONG).show();
+
 			// Vibrate the mobile phone
 			Vibrator vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
 			vibrator.vibrate(500);
@@ -95,9 +99,9 @@ public class TXYMainActivity extends ActionBarActivity {
 	}
 
 
-	private void addToScreen(String userName) {
+	private void addToScreen(List<String> users) {
 		TextView usersTextView = (TextView) findViewById(R.id.usersTextView);
-		usersTextView.setText(mArrayAdapter.toString());
+		usersTextView.setText(users.toString());
 	}
 
 }
