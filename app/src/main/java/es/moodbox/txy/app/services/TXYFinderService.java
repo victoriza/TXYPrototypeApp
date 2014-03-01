@@ -14,6 +14,7 @@ import android.text.format.DateUtils;
 import android.text.format.Time;
 import android.util.Log;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -24,119 +25,129 @@ import es.moodbox.txy.app.TXYMainActivity;
  */
 public class TXYFinderService extends Service {
 
-    private static final int DELAY_MINUTES = 5;
+	private static final int DELAY_MINUTES = 1;
 
-    private BluetoothAdapter mBluetoothAdapter;
+	public final static String USER_KEY = "user";
 
-    private List<String> mArrayAdapter;
+	private BluetoothAdapter mBluetoothAdapter;
 
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.d("@@ - TXYFinderService", "onStartCommand #extras: " + intent.getExtras().size());
+	private List<String> mUsers;
 
-        //TODO: check if null
-        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+	@Override
+	public int onStartCommand(Intent intent, int flags, int startId) {
+		Log.d("@@ - TXYFinderService", "onStartCommand #extras: ");
 
-        findPairedDevices();
+		mUsers = new ArrayList<String>();
 
-        // Register the BroadcastReceiver
-        registerBluetoothActionFoundReceiver();
+		//TODO: check if null
+		mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
-        //discovers devices
-        mBluetoothAdapter.startDiscovery();
+		findPairedDevices();
 
-        scheduleNextUpdate(DELAY_MINUTES);
+		// Register the BroadcastReceiver
+		registerBluetoothActionFoundReceiver();
 
-        //Similar to Service.START_STICKY but the original Intent is re-delivered to the onStartCommand method.
-        return Service.START_REDELIVER_INTENT;
-    }
+		//discovers devices
+		mBluetoothAdapter.startDiscovery();
 
-    private void scheduleNextUpdate(int delayedMinutes) {
-        Log.d("@@ - TXYFinderService", "scheduleNextUpdate");
-        Intent intent = new Intent(this, this.getClass());
-        PendingIntent pendingIntent = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+		scheduleNextUpdate(DELAY_MINUTES);
 
-        // The update frequency should often be user configurable. This is not.
-        long nextUpdateTimeMillis = System.currentTimeMillis() + delayedMinutes * DateUtils.MINUTE_IN_MILLIS;
-        Time nextUpdateTime = new Time();
-        nextUpdateTime.set(nextUpdateTimeMillis);
+		//Similar to Service.START_STICKY but the original Intent is re-delivered to the onStartCommand method.
+		return Service.START_REDELIVER_INTENT;
+	}
 
-        AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-        alarmManager.set(AlarmManager.RTC, nextUpdateTimeMillis, pendingIntent);
-    }
+	private void scheduleNextUpdate(int delayedMinutes) {
+		Log.d("@@ - TXYFinderService", "scheduleNextUpdate");
+		Intent intent = new Intent(this, this.getClass());
+		PendingIntent pendingIntent = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-    private void begingDiscoberable() {
-        Intent discoverableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
-        discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300);
-        startActivity(discoverableIntent);
-    }
+		// The update frequency should often be user configurable. This is not.
+		long nextUpdateTimeMillis = System.currentTimeMillis() + delayedMinutes * DateUtils.MINUTE_IN_MILLIS;
+		Time nextUpdateTime = new Time();
+		nextUpdateTime.set(nextUpdateTimeMillis);
+
+		AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+		alarmManager.set(AlarmManager.RTC, nextUpdateTimeMillis, pendingIntent);
+	}
+
+	private void begingDiscoberable() {
+		Intent discoverableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
+		discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300);
+		startActivity(discoverableIntent);
+	}
 
 
-    private void userFoundBroadcast() {
-        Intent sendBroadcast = new Intent(TXYMainActivity.ES_MOODBOX_TXY_USER_FOUND);
-        sendBroadcast.putExtra("users", new Integer(2));
+	private void userFoundBroadcast(String user) {
+		Intent sendBroadcast = new Intent(TXYMainActivity.ES_MOODBOX_TXY_USER_FOUND);
+		sendBroadcast.putExtra(USER_KEY, user);
 
-        Log.d("@@ - TXYFinderService", "Broadcast sent!");
-        sendBroadcast(sendBroadcast);
-    }
+		Log.d("@@ - TXYFinderService", "Broadcast sent!");
+		sendBroadcast(sendBroadcast);
+	}
 
-    private void registerBluetoothActionFoundReceiver() {
-        // Register the BroadcastReceiver
-        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
-        registerReceiver(mReceiver, filter); // Don't forget to unregister during onDestroy
-    }
+	private void registerBluetoothActionFoundReceiver() {
+		// Register the BroadcastReceiver
+		IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+		registerReceiver(mReceiver, filter); // Don't forget to unregister during onDestroy
+	}
 
-    private void findPairedDevices() {
-        Log.d(this.getClass().getName(), "@@ -- Starting finding Paired Devices");
-        Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
-        // If there are paired devices
-        if (pairedDevices.size() > 0) {
-            // Loop through paired devices
-            for (BluetoothDevice device : pairedDevices) {
+	private void findPairedDevices() {
+		Log.d(this.getClass().getName(), "@@ -- Starting finding Paired Devices");
+		Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
+		// If there are paired devices
+		if (pairedDevices.size() > 0) {
+			// Loop through paired devices
+			for (BluetoothDevice device : pairedDevices) {
 
-                Log.d("@@ - findPairedDevices", device == null ? " null name " : device.getName());
+				Log.d("@@ - findPairedDevices", device == null ? " null name " : device.getName());
 
-                // Add the name and address to an array adapter to show in a ListView
-                mArrayAdapter.add(device.getName() + "\n" + device.getAddress());
-            }
-        }
-        Log.d(this.getClass().getName(), "@@ -- End finding Paired Devices");
-    }
+				// Add the name and address to an array adapter to show in a ListView
+				mUsers.add(device.getName() + "\n" + device.getAddress());
+			}
+		}
+		Log.d(this.getClass().getName(), "@@ -- End finding Paired Devices");
+	}
 
-    // Create a BroadcastReceiver for ACTION_FOUND
-    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
+	// Create a BroadcastReceiver for ACTION_FOUND
+	private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
 
-        public void onReceive(Context context, Intent intent) {
-            Log.d(this.getClass().getName(), "@@ --- Receiving from broadcast");
-            String intentAction = intent.getAction();
+		public void onReceive(Context context, Intent intent) {
+			Log.d(this.getClass().getName(), "@@ --- Receiving from broadcast");
+			String intentAction = intent.getAction();
 
-            Log.d(this.getClass().getName(), "@@ ---- Action: "+intentAction);
-            // When discovery finds a device
-            if (BluetoothDevice.ACTION_FOUND.equals(intentAction)) {
-                // Get the BluetoothDevice object from the Intent
-                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+			Log.d(this.getClass().getName(), "@@ ---- Action: " + intentAction);
+			// When discovery finds a device
+			if (BluetoothDevice.ACTION_FOUND.equals(intentAction)) {
+				// Get the BluetoothDevice object from the Intent
+				BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
 
-                Log.d("@@ ---> BroadcastReceiver", device == null ? " null name " : device.getName());
+				Log.d("@@ ---> BroadcastReceiver", device == null ? " null name " : device.getName());
 
-                userFoundBroadcast();
+				String user = device.getName() + "-" + device.getAddress();
 
-                // Add the name and address to an array adapter to show in a ListView
-                mArrayAdapter.add(device.getName() + "\n" + device.getAddress());
-            }
-        }
-    };
+				userFoundBroadcast(user);
 
-    @Override
-    public IBinder onBind(Intent intent) {
-        Log.d("@@ - TXYFinderService", "onBind!");
-        return null;
-    }
+				// Add the name and address to an array adapter to show in a ListView
+				mUsers.add(user);
+			}
+		}
+	};
 
-    public void onDestroy() {
-        super.onDestroy();
+	@Override
+	public IBinder onBind(Intent intent) {
+		Log.d("@@ - TXYFinderService", "onBind!");
+		return null;
+	}
 
-        unregisterReceiver(mReceiver);
+	public void onDestroy() {
+		super.onDestroy();
 
-        Log.e("@@ Destroy", " system is shutting down the service");
-    }
+		unregisterReceiver(mReceiver);
+
+		Log.e("@@ Destroy", " system is shutting down the service");
+	}
+
+	public List<String> getmUsers() {
+		return mUsers;
+	}
 }
