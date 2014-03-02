@@ -19,11 +19,13 @@ import java.util.List;
 import java.util.Set;
 
 import es.moodbox.txy.app.TXYMainActivity;
+import es.moodbox.txy.app.domain.Meetup;
+import es.moodbox.txy.app.domain.User;
 
 /**
  * Created by suarvic on 10/02/14.
  */
-public class TXYFinderService extends Service {
+public class MeetupFinderService extends Service {
 
 	private static final int DELAY_MINUTES = 1;
 
@@ -31,18 +33,17 @@ public class TXYFinderService extends Service {
 
 	private BluetoothAdapter mBluetoothAdapter;
 
-	private List<String> mUsers;
+	private static User user;
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		Log.d("@@ - TXYFinderService", "onStartCommand #extras: ");
+		Log.d("@@ - MeetupFinderService", "onStartCommand #extras: ");
 
-		mUsers = new ArrayList<String>();
-
-		//TODO: check if null
 		mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
-		findPairedDevices();
+		user = new User(mBluetoothAdapter.getName(), mBluetoothAdapter.getAddress());
+		//TODO: check if not duplicated, broadcast
+		//findPairedDevices();
 
 		// Register the BroadcastReceiver
 		registerBluetoothActionFoundReceiver();
@@ -57,7 +58,7 @@ public class TXYFinderService extends Service {
 	}
 
 	private void scheduleNextUpdate(int delayedMinutes) {
-		Log.d("@@ - TXYFinderService", "scheduleNextUpdate");
+		Log.d("@@ - MeetupFinderService", "scheduleNextUpdate");
 		Intent intent = new Intent(this, this.getClass());
 		PendingIntent pendingIntent = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
 
@@ -81,8 +82,8 @@ public class TXYFinderService extends Service {
 		Intent sendBroadcast = new Intent(TXYMainActivity.ES_MOODBOX_TXY_USER_FOUND);
 		sendBroadcast.putExtra(USER_KEY, user);
 
-		Log.d("@@ - TXYFinderService", "Broadcast sent!");
 		sendBroadcast(sendBroadcast);
+		Log.d("@@ - MeetupFinderService", "Broadcast sent #meetups: " + TXYMainActivity.mMeetups.size());
 	}
 
 	private void registerBluetoothActionFoundReceiver() {
@@ -102,7 +103,10 @@ public class TXYFinderService extends Service {
 				Log.d("@@ - findPairedDevices", device == null ? " null name " : device.getName());
 
 				// Add the name and address to an array adapter to show in a ListView
-				mUsers.add(device.getName() + "\n" + device.getAddress());
+				Meetup meetup = new Meetup(user, new User(device.getName(), device.getAddress()));
+				if (!TXYMainActivity.mMeetups.contains(meetup)) {
+					TXYMainActivity.mMeetups.add(meetup);
+				}
 			}
 		}
 		Log.d(this.getClass().getName(), "@@ -- End finding Paired Devices");
@@ -112,30 +116,29 @@ public class TXYFinderService extends Service {
 	private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
 
 		public void onReceive(Context context, Intent intent) {
-			Log.d(this.getClass().getName(), "@@ --- Receiving from broadcast");
 			String intentAction = intent.getAction();
-
-			Log.d(this.getClass().getName(), "@@ ---- Action: " + intentAction);
 			// When discovery finds a device
 			if (BluetoothDevice.ACTION_FOUND.equals(intentAction)) {
 				// Get the BluetoothDevice object from the Intent
 				BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
 
-				Log.d("@@ ---> BroadcastReceiver", device == null ? " null name " : device.getName());
+				Log.d("@@ ------------> BroadcastReceiver", device == null ? " null name " : device.getName() + " #mMeetups: "+TXYMainActivity.mMeetups);
 
-				String user = device.getName() + "-" + device.getAddress();
-
-				userFoundBroadcast(user);
-
-				// Add the name and address to an array adapter to show in a ListView
-				mUsers.add(user);
+				//If not already added
+				Meetup meetup = new Meetup(user, new User(device.getName(), device.getAddress()));
+				if (!TXYMainActivity.mMeetups.contains(meetup)) {
+					Log.d("@@ ---> BroadcastReceiver", " added");
+					TXYMainActivity.mMeetups.add(meetup);
+					//send the broadcast to do the update
+					userFoundBroadcast(device.getName() + "-" + device.getAddress());
+				}
 			}
 		}
 	};
 
 	@Override
 	public IBinder onBind(Intent intent) {
-		Log.d("@@ - TXYFinderService", "onBind!");
+		Log.d("@@ - MeetupFinderService", "onBind!");
 		return null;
 	}
 
@@ -145,9 +148,5 @@ public class TXYFinderService extends Service {
 		unregisterReceiver(mReceiver);
 
 		Log.e("@@ Destroy", " system is shutting down the service");
-	}
-
-	public List<String> getmUsers() {
-		return mUsers;
 	}
 }
