@@ -5,7 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
-import es.moodbox.txy.app.services.TXYFinderService;
+import es.moodbox.txy.app.services.MeetupFinderService;
 
 /**
  * Created by suarvic on 10/02/14.
@@ -15,7 +15,7 @@ public class TXYReceiver extends BroadcastReceiver {
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		Log.d("@@ TXYReceiver", " starting service, phone just send the BOOT_COMPLETED! ");
-		Intent service = new Intent(context, TXYFinderService.class);
+		Intent service = new Intent(context, MeetupFinderService.class);
 		context.startService(service);
 	}
 }
