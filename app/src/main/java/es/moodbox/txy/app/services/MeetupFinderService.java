@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import es.moodbox.txy.app.TXYMainActivity;
+import es.moodbox.txy.app.activity.TXYMainActivity;
 import es.moodbox.txy.app.domain.Meetup;
 import es.moodbox.txy.app.domain.User;
 
@@ -32,6 +32,9 @@ public class MeetupFinderService extends Service {
 	public final static String USER_KEY = "user";
 
 	private BluetoothAdapter mBluetoothAdapter;
+
+	//Important: Keep ibn mind that needs to share the same heap to be visible in other activities
+	private static List<Meetup> mMeetups = new ArrayList<Meetup>();
 
 	private static User user;
 
@@ -83,7 +86,7 @@ public class MeetupFinderService extends Service {
 		sendBroadcast.putExtra(USER_KEY, user);
 
 		sendBroadcast(sendBroadcast);
-		Log.d("@@ - MeetupFinderService", "Broadcast sent #meetups: " + TXYMainActivity.mMeetups.size());
+		Log.d("@@ - MeetupFinderService", "Broadcast sent #meetups: " + mMeetups.size());
 	}
 
 	private void registerBluetoothActionFoundReceiver() {
@@ -104,8 +107,8 @@ public class MeetupFinderService extends Service {
 
 				// Add the name and address to an array adapter to show in a ListView
 				Meetup meetup = new Meetup(user, new User(device.getName(), device.getAddress()));
-				if (!TXYMainActivity.mMeetups.contains(meetup)) {
-					TXYMainActivity.mMeetups.add(meetup);
+				if (!mMeetups.contains(meetup)) {
+					mMeetups.add(meetup);
 				}
 			}
 		}
@@ -122,19 +125,26 @@ public class MeetupFinderService extends Service {
 				// Get the BluetoothDevice object from the Intent
 				BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
 
-				Log.d("@@ ------------> BroadcastReceiver", device == null ? " null name " : device.getName() + " #mMeetups: "+TXYMainActivity.mMeetups);
+				Log.d("@@ ------------> BroadcastReceiver", device == null ? " null name " : device.getName() + " #mMeetups: " + mMeetups);
 
 				//If not already added
 				Meetup meetup = new Meetup(user, new User(device.getName(), device.getAddress()));
-				if (!TXYMainActivity.mMeetups.contains(meetup)) {
-					Log.d("@@ ---> BroadcastReceiver", " added");
-					TXYMainActivity.mMeetups.add(meetup);
+				if (!mMeetups.contains(meetup)) {
+					mMeetups.add(meetup);
 					//send the broadcast to do the update
 					userFoundBroadcast(device.getName() + "-" + device.getAddress());
 				}
+				userFoundBroadcast("Update");
 			}
 		}
 	};
+
+	public void sentToNeo4j() {
+		Log.d("Neo4j @@ ------http------> ", "connecting to db");
+
+
+	}
+
 
 	@Override
 	public IBinder onBind(Intent intent) {
@@ -148,5 +158,9 @@ public class MeetupFinderService extends Service {
 		unregisterReceiver(mReceiver);
 
 		Log.e("@@ Destroy", " system is shutting down the service");
+	}
+
+	public static List<Meetup> getMeetups() {
+		return mMeetups;
 	}
 }

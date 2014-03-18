@@ -3,9 +3,9 @@
     android:id="@+id/container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="es.moodbox.txy.app.TXYMainActivity"
+    tools:context="es.moodbox.txy.app.activity.TXYMainActivity"
     tools:ignore="MergeRootFrame"
-    android:background="#ff0891">
+    android:background="#ffff7405">
 
     <TextView
         android:layout_width="match_parent"
@@ -14,13 +14,28 @@
         android:text="@string/hello_world"
         android:id="@+id/textView"
         android:layout_gravity="left|top"
-        android:textColor="#0097ff" />
+        android:textColor="#ffff00c9" />
 
     <TextView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="290dp"
         android:textAppearance="?android:attr/textAppearanceSmall"
         android:text="@string/users"
         android:id="@+id/usersTextView"
-        android:layout_gravity="left|center_vertical" />
+        android:layout_gravity="left|center_vertical"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="37dp"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="@string/relationship"
+        android:id="@+id/relationshipTextView"
+        android:layout_gravity="left|bottom"/>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/send_data_button"
+        android:id="@+id/sendDataButton"
+        android:layout_gravity="right|bottom"/>
 </FrameLayout>

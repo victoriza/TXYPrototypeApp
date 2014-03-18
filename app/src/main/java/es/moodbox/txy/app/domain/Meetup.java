@@ -14,6 +14,7 @@ public class Meetup {
 	private User userB;
 	private Date meetingStart;
 	private Date meetingEnd;
+	private String relationship;
 
 
 	public Meetup(User userA, User userB) throws IllegalArgumentException {
@@ -40,7 +41,7 @@ public class Meetup {
 	 *
 	 * @return
 	 */
-	private long endMeeting() {
+	public long getMeetingEnd() {
 
 		meetingEnd = new Date();
 
@@ -63,6 +64,14 @@ public class Meetup {
 		} else {
 			return userB.getUserName().equals(((Meetup) b).getUserB().getUserName());
 		}
+	}
+
+	public String getRelationship() {
+		return relationship;
+	}
+
+	public void setRelationship(String relationship) {
+		this.relationship = relationship;
 	}
 
 	@Override
