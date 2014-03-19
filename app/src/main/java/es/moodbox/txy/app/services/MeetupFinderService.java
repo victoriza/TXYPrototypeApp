@@ -160,6 +160,10 @@ public class MeetupFinderService extends Service {
 		Log.e("@@ Destroy", " system is shutting down the service");
 	}
 
+	public static void setMeetups(List<Meetup> mMeetups) {
+		MeetupFinderService.mMeetups = mMeetups;
+	}
+
 	public static List<Meetup> getMeetups() {
 		return mMeetups;
 	}

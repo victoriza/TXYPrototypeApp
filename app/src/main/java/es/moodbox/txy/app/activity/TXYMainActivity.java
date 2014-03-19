@@ -30,10 +30,12 @@ import es.moodbox.txy.app.task.PostAsyncTask;
 public class TXYMainActivity extends ActionBarActivity {
 
 	public static final String PREFS_NAME = TXYMainActivity.class.getName() + "File";
+
 	public static final String ES_MOODBOX_TXY_USER_FOUND = "es.moodbox.txy.UserFound";
+
 	private final static int REQUEST_ENABLE_BT = 1;
 	private static final String ACTUAL_ACTIVITY = "ACTUAL_ACTIVITY";
-	public static final String DEF_VALUE = "someOne";
+
 	private BluetoothAdapter mBluetoothAdapter;
 	private SharedPreferences settings = null;
 	private static String meetupRelationship;
@@ -44,7 +46,7 @@ public class TXYMainActivity extends ActionBarActivity {
 		setContentView(R.layout.activity_txy_main);
 		mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 		settings = getSharedPreferences(PREFS_NAME, 0);
-		meetupRelationship = settings.getString(ACTUAL_ACTIVITY, DEF_VALUE);
+		meetupRelationship = settings.getString(ACTUAL_ACTIVITY, "");
 	}
 
 	@Override
@@ -83,14 +85,21 @@ public class TXYMainActivity extends ActionBarActivity {
 			@Override
 			public void onClick(View v) {
 				//what where is all about
-				if (MeetupFinderService.getMeetups() != null && !MeetupFinderService.getMeetups().isEmpty()) {
-					showWhatWhereAreYouDoing();
-				}
+				showWhatAreYouDoing();
 			}
 		});
 	}
 
-	private void showWhatWhereAreYouDoing() {
+	private void showWhatAreYouDoing() {
+		//there is nothing to do
+		if (MeetupFinderService.getMeetups() == null ||
+				MeetupFinderService.getMeetups().isEmpty()) {
+
+			//noting to do
+			Toast.makeText(this,
+					"Nothing to send...",Toast.LENGTH_LONG).show();
+			return;
+		}
 		// get prompts.xml view
 		LayoutInflater li = LayoutInflater.from(this);
 		View promptsView = li.inflate(R.layout.prompt, null);
@@ -116,6 +125,8 @@ public class TXYMainActivity extends ActionBarActivity {
 										Toast.LENGTH_LONG).show();
 								//and send the data
 								addRelationshipAndSend(userInput.getText().toString());
+								//restart the view
+								resetView();
 							}
 						}
 				)
@@ -132,12 +143,19 @@ public class TXYMainActivity extends ActionBarActivity {
 		alertDialog.show();
 	}
 
+	private void resetView() {
+		//reset the finder founded
+		MeetupFinderService.setMeetups(new ArrayList<Meetup>());
+		//update the screen
+		updateMeetupsScreen(MeetupFinderService.getMeetups());
+	}
+
 	private void addRelationshipAndSend(String meetupRelationship) {
-		List<Meetup> meetupCopy = new ArrayList<Meetup>(MeetupFinderService.getMeetups());
-		for (Meetup m : meetupCopy) {
+		List<Meetup> copy = new ArrayList<Meetup>(MeetupFinderService.getMeetups());
+		for (Meetup m : copy) {
 			m.setRelationship(meetupRelationship);
 		}
-		new PostAsyncTask().execute(meetupCopy);
+		new PostAsyncTask().execute(copy);
 	}
 
 
@@ -151,7 +169,7 @@ public class TXYMainActivity extends ActionBarActivity {
 			Log.d("@@ Current meetups", " #meetups: " + MeetupFinderService.getMeetups());
 
 			//show the info
-			addToScreen(MeetupFinderService.getMeetups());
+			updateMeetupsScreen(MeetupFinderService.getMeetups());
 			Toast.makeText(context, "User found: " + brUserNameB == null ? "update" : brUserNameB, Toast.LENGTH_LONG).show();
 		}
 	};
@@ -184,8 +202,8 @@ public class TXYMainActivity extends ActionBarActivity {
 	}
 
 
-	private void addToScreen(List<Meetup> users) {
-		if (users == null || users.isEmpty()) {
+	private void updateMeetupsScreen(List<Meetup> users) {
+		if (users == null) {
 			return;
 		}
 		TextView usersTextView = (TextView) findViewById(R.id.usersTextView);

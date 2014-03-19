@@ -1,5 +1,6 @@
 package es.moodbox.txy.app.task;
 
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -15,25 +16,31 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import es.moodbox.txy.app.activity.TXYMainActivity;
 import es.moodbox.txy.app.domain.Meetup;
 
 /**
  * Created by victor on 18/03/14.
  */
-public class PostAsyncTask extends AsyncTask<List<Meetup>, Integer, Double> {
+public class PostAsyncTask extends AsyncTask<List<Meetup>, Integer, Integer> {
 
 	private final static String POST_URL = "http://txyplatform.victoriza.cloudbees.net/meetup/addMeetup";
 
 	@Override
-	protected Double doInBackground(List<Meetup>... meetups) {
-
-		for (Meetup meetup : meetups[0]) {
-			postMeetup(meetup);
-		}
-		return null;
+	protected void onPostExecute(Integer result) {
+		Log.d("@@ Meetups posted, sending finished task ", "meetups: "+result);
 	}
 
-	private static void postMeetup(Meetup meetup) {
+	@Override
+	protected Integer doInBackground(List<Meetup>... meetups) {
+
+		for (Meetup meetup : meetups[0]) {
+			sendMeetupHttpPost(meetup);
+		}
+		return meetups.length;
+	}
+
+	private static void sendMeetupHttpPost(Meetup meetup) {
 		HttpClient httpclient = new DefaultHttpClient();
 
 		Log.d("@@ HttpClient ", " post start");
